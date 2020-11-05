@@ -1,4 +1,5 @@
 # Hello-Algorithms
-Algorithms Puzzles and Solutions
+**Algorithm problems and puzzles** solved and implemented in **Python**.
 
-hahaha
+For **studying** algorithms and implementing **new python features**.
+
