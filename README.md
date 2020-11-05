@@ -1,2 +1,2 @@
-# Hello-World-Algos
+# Hello-Algorithms
 Algorithms Puzzles and Solutions
