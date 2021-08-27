@@ -1,4 +1,4 @@
 # Hello-Algorithms
-Algorithm problems and puzzles solved and implemented in Python
+Algorithm problems and puzzles implemented in Python
 
 
