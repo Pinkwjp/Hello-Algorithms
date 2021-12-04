@@ -1,82 +1,104 @@
 """
-find the stable matchinig between two groups of men and women
-where each member has a preference for each member in the other group
+find a stable matching between of a group of men and a group of women with same size
+where each member has a preference for his or her partner
 """
 
 from __future__ import annotations
-from random import shuffle
-from typing import List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Tuple, Any
 
 
-class Base():
-    def __init__(self, id_num: int) -> None:
-        self.id_num = id_num
+class PersonBase:
+    """
+    a dating-orienated base class 
 
-    def set_preference(self, potential_partners: List[Any]) -> None:
-        self.preference_list = list(potential_partners)
-        shuffle(self.preference_list)
+    assume: coupling happens between opposite sexes
+
+    note: subclasses need to re-type-hint self.partner
+    """
+
+    genders = {'male', 'female'}
+    partner: Any = None
+
+    def __init__(self, id_number: int, gender: str) -> None:
+        if gender.lower() not in self.genders:
+            raise ValueError(f'{gender} is not a valid gender.')
+        self.id_number = id_number
+        self.gender = gender
+
+    def __repr__(self) -> str:
+        return f'{self.gender}: {self.id_number}'
+    
+    def is_single(self) -> bool:
+        return (self.partner is None)
+    
+    def set_preference(self, preference: List[Any]) -> None:
+        """most prefered to least prefered"""
+        self.preference = tuple(preference)
+        self._set_preference_score()
+    
+    def _set_preference_score(self) -> None:
+        scores = [i for i in range(len(self.preference)+1, 0, -1)]
+        self.preference_scores: Dict[Any, int] = dict(zip(self.preference, scores))
+    
+    def _score(self, person: Any) -> int:
+        try:
+            return self.preference_scores[person]
+        except:
+            raise KeyError(f'{person} is not in {self.gender} {self.id_number} \'s preference list.')
+ 
+    def like(self, person: Any) -> bool:
+        if self.partner is None:
+            return True
+        if self._score(person) > self._score(self.partner):
+            return True
+        return False
+    
+    def marry(self, person: Any) -> None:
+        self.partner = person
+        person.partner = self
+    
+    def divorce(self) -> Any:
+        if not self.partner:
+            raise ValueError(f'{self.gender} {self.id_number} has no partner to divorce.')
+        ex_partner = self.partner
+        self.partner = None
+        ex_partner.partner = None
+        return ex_partner
 
 
-class Man(Base):
-    def __init__(self, id_num: int) -> None:
-        super().__init__(id_num)
+class Man(PersonBase):
+    def __init__(self, id_number: int, gender: str = 'male') -> None:
+        super().__init__(id_number, gender)
         self.proposed_women: Set[Woman] = set()
+        self.partner: Optional[Woman] = None
     
-    def set_preference(self, potential_partners: List[Woman]) -> None:
-        super().set_preference(potential_partners)
-        
-
-class Woman(Base):
-    def __init__(self, id_num: int) -> None:
-        super().__init__(id_num)
-        self.husband: Optional[Man1] = None 
+    def has_proposed(self, w: Woman) -> bool:
+        return (w in self.proposed_women)
     
-    def set_preference(self, potential_partners: List[Man]) -> None:
-        super().set_preference(potential_partners)
-        self.preference_score = {man: score for (score, man)
-                                in enumerate(self.preference_list)}
+    def add_proposed(self, w: Woman) -> None:
+        self.proposed_women.add(w)
+    
 
-
-def stable_matching(num_pairs: int) -> List[Tuple[int, int]]:
-    """return the stable matching pairs of man, woman"""
-    # initialize
-    men = [Man(id_num=i) for i in range(num_pairs)]
-    women = [Woman(id_num=i) for i in range(num_pairs)]
-    for man in men:
-        man.set_preference(women)
-    for woman in women: 
-        woman.set_preference(men)
-    # perform matching
+class Woman(PersonBase):
+    def __init__(self, id_number: int, gender: str = 'female') -> None:
+        super().__init__(id_number, gender)
+        self.partner: Optional[Man] = None
+    
+    
+def stable_matching(men: List[Man], women: List[Woman]) -> List[Tuple[Man, Woman]]:
+    """return a stable matching"""
     while men:
-        m = men.pop() 
-        for w in m.preference_list: 
-            if w in m.proposed_women:
+        man = men.pop()
+        for woman in man.preference:
+            if man.has_proposed(woman):
                 continue
-            m.proposed_women.add(w)
-            h = w.husband
-            # woman single?
-            if h is None:
-                w.husband = m
-                break
-            # choose one man
+            man.add_proposed(woman)
+            if woman.is_single():
+                woman.marry(man)
+            elif woman.like(man):
+                ex_husband = woman.divorce()
+                men.append(ex_husband)
+                woman.marry(man)
             else:
-                if w.preference_score[m] > w.preference_score[h]:
-                    w.husband = m
-                    men.append(h) 
-                    break
-        # no match
-        else: 
-            men.append(m)
-    # result
-    pairs: List[Tuple[int, int]] = []
-    for w in women:
-        if m := w.husband:
-            pairs.append((m.id_num, w.id_num))
-    return pairs
-
-
-# mypy stable_matching.py
-if __name__ == '__main__':
-    num_pairs = 5
-    pairs = stable_matching(num_pairs)
-    print(pairs)
+                men.append(man)
+    return [(w.partner, w) for w in women if w.partner]
