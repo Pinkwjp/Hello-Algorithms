@@ -1,8 +1,7 @@
 # Hello-Algorithms
-Algorithm problems and puzzles implemented in Python.
 
-For the appreciation of algorithms and Python,
-this project is aiming to include as many algorithms as possible,
-and the codes will be written as Pythonic as possible.
+Algorithm problems implemented in Python as a way to practice my python skill and coding techniques (OOP, refactoring and others).
 
-I hope people will find the project useful.
+I try to make the main logic of the algorithms evident by using classes to better communicate the context of each problem.
+Also, I incorporate type hinting to make the code more explicit and to keep the comments at minimal.
+I may add other languages as a way to learn those in the future.
